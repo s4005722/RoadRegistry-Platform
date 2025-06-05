@@ -96,12 +96,10 @@ public class Person {
         LocalDate dob = LocalDate.parse(this.birthdate, DATE_FMT);
         int ageNow = Period.between(dob, LocalDate.now()).getYears();
 
-        // Condition (B): If under 18, cannot change address
         if (ageNow < 18 && !newAddress.equals(this.address)) {
             return false;
         }
 
-        // Condition (C): If the birthdate is changing, no other field may change
         boolean birthChanged = !newBirthdate.equals(this.birthdate);
         boolean nameOrIDOrAddressChanged =
                !newID.equals(originalID)
@@ -129,17 +127,14 @@ public class Person {
             boolean replacedOne = false;
 
             for (String line : allLines) {
-                // Split into at most 5 parts:
-                //   [0]=personID, [1]=firstName, [2]=lastName, [3]=address, [4]=birthdate
+                // Split into at most 5 parts
                 String[] parts = line.split("\\|", 5);
                 if (parts.length < 5) {
-                    // Malformed line—just keep it unchanged
                     updatedLines.add(line);
                     continue;
                 }
 
                 if (parts[0].equals(originalID) && !replacedOne) {
-                    // This is the line we want to replace exactly once
                     String newRecord = String.join("|",
                         newID,
                         newFirstName,
@@ -150,7 +145,6 @@ public class Person {
                     updatedLines.add(newRecord);
                     replacedOne = true;
                 } else {
-                    // Keep the existing line unchanged
                     updatedLines.add(line);
                 }
             }
@@ -163,7 +157,7 @@ public class Person {
                 StandardOpenOption.TRUNCATE_EXISTING
             );
 
-            // Update this object’s fields in memory:
+            // Update this object’s fields
             this.personID  = newID;
             this.firstName = newFirstName;
             this.lastName  = newLastName;
@@ -173,7 +167,6 @@ public class Person {
             return true;
 
         } catch (IOException e) {
-            // If any I/O error happens while reading/writing, signal failure
             return false;
         }
     }
