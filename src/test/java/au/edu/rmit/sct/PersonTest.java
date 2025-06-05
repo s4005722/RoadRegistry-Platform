@@ -224,7 +224,7 @@ public class PersonTest {
     @Test
     @DisplayName("updatePersonalDetails: invalid new address format → fails")
     public void testUpdatePersonalDetails_invalidNewAddressFormat() {
-        // Add a valid person first
+        //Add a valid person
         Person p = new Person(
             "56@#_&$%AB",
             "Alice",
@@ -235,16 +235,115 @@ public class PersonTest {
         assertTrue(p.addPerson(),
                    "Must have a valid person in persons.txt");
 
-        // Now attempt to update with an address that has no '|' separators
+        //Now attempt to update with an address that has no '|' separators
         boolean result = p.updatePersonalDetails(
             "56@#_&$%AB",
-            "56@#_&$%AB",  // ID unchanged
-            "Alice",       // firstName unchanged
-            "Walker",      // lastName unchanged
-            // Missing any '|' so validateAddress() should fail
+            "56@#_&$%AB",
+            "Alice",
+            "Walker",
             "32 Highland Street Melbourne Victoria Australia",
-            "15-11-1990"   // birthdate unchanged
+            "15-11-1990"
         );
         assertFalse(result,
                     "New address missing '|' separators should fail validation");
+    }
+
+    @Test
+    @DisplayName("addDemeritPoints: pts <1 = Failed")
+    public void testAddDemeritPoints_ptsTooLow() {
+        //Add a valid person so that demeritPoints.txt can be appended
+        Person p = new Person(
+            "45&*()!$GH",
+            "Bob",
+            "Smith",
+            "100|Main Road|Melbourne|Victoria|Australia",
+            "15-11-1990"
+        );
+        assertTrue(p.addPerson(),
+                   "Person must be added before adding demerit points");
+
+        //Now supply 0 points, should return "Failed"
+        assertEquals("Failed", p.addDemeritPoints("10-10-2024", 0),
+                     "Points <1 should cause addDemeritPoints() to return 'Failed'");
+    }
+
+    @Test
+    @DisplayName("addDemeritPoints: invalid date format = Failed")
+    public void testAddDemeritPoints_invalidDate() {
+        //Add Bob
+        Person p = new Person(
+            "45&*()!$GH",
+            "Bob",
+            "Smith",
+            "100|Main Road|Melbourne|Victoria|Australia",
+            "15-11-1990"
+        );
+        assertTrue(p.addPerson());
+
+        //Supply an offenseDate in format "YYYY/MM/DD" instead of "DD-MM-YYYY"
+        assertEquals("Failed", p.addDemeritPoints("2024/10/10", 3),
+                     "Invalid date format should cause addDemeritPoints() to return 'Failed'");
+    }
+
+    @Test
+    @DisplayName("addDemeritPoints: total under threshold for over-21 = no suspension")
+    public void testAddDemeritPoints_underThreshold() {
+        //Add Bob, who was born 15-11-1990
+        Person p = new Person(
+            "45&*()!$GH",
+            "Bob",
+            "Smith",
+            "100|Main Road|Melbourne|Victoria|Australia",
+            "15-11-1990"
+        );
+        assertTrue(p.addPerson());
+        assertEquals("Success", p.addDemeritPoints("01-01-2023", 3));
+        assertFalse(p.isSuspended(),
+                    "3 points < 12 threshold for over-21 = not suspended");
+        assertEquals("Success", p.addDemeritPoints("01-06-2023", 4));
+        assertFalse(p.isSuspended(),
+                    "Total 7 < 12 = still not suspended for over-21");
+    }
+
+    @Test
+    @DisplayName("addDemeritPoints: total > threshold for under-21 = suspend")
+    public void testAddDemeritPoints_under21_exceed() {
+        //Create a teen under 21
+        Person teen = new Person(
+            "78**&&RTYU",
+            "Cara",
+            "Lee",
+            "12|Elm St|Melbourne|Victoria|Australia",
+            "01-01-2005"
+        );
+        assertTrue(teen.addPerson());
+        assertEquals("Success", teen.addDemeritPoints("01-03-2023", 4));
+        assertFalse(teen.isSuspended(),
+                    "4 points < 6 threshold for under-21 = not suspended");
+        assertEquals("Success", teen.addDemeritPoints("01-06-2023", 3));
+        assertTrue(teen.isSuspended(),
+                   "7 points > 6 threshold for under-21 = should be suspended");
+    }
+
+    @Test
+    @DisplayName("addDemeritPoints: total > threshold for over-21 = suspended")
+    public void testAddDemeritPoints_over21_exceed() {
+        //Add Bob over 21
+        Person p = new Person(
+            "45&*()!$GH",
+            "Bob",
+            "Smith",
+            "100|Main Road|Melbourne|Victoria|Australia",
+            "15-11-1990"
+        );
+        assertTrue(p.addPerson());
+        assertEquals("Success", p.addDemeritPoints("01-01-2023", 6));
+        assertFalse(p.isSuspended(),
+                    "6 points < 12 threshold for over-21 = not suspended");
+        assertEquals("Success", p.addDemeritPoints("01-06-2023", 6));
+        assertFalse(p.isSuspended(),
+                    "12 points = 12 threshold for over-21 = still not suspended");
+        assertEquals("Success", p.addDemeritPoints("01-12-2023", 1));
+        assertTrue(p.isSuspended(),
+                   "13 points > 12 threshold for over-21 = should be suspended");
     }
