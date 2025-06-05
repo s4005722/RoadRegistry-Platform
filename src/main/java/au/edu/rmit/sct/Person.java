@@ -177,3 +177,75 @@ public class Person {
             return false;
         }
     }
+
+
+
+
+
+
+
+
+
+  
+    private boolean validatePersonID(String id) {
+        if (id == null || id.length() != 10) {
+            return false;
+        }
+        for (int i = 0; i < 2; i++) {
+            char c = id.charAt(i);
+            if (!Character.isDigit(c) || c < '2' || c > '9') {
+                return false;
+            }
+        }
+        for (int i = 8; i < 10; i++) {
+            char c = id.charAt(i);
+            if (c < 'A' || c > 'Z') {
+                return false;
+            }
+        }
+        int specialCount = 0;
+        for (int i = 2; i < 8; i++) {
+            char c = id.charAt(i);
+            if (!Character.isLetterOrDigit(c)) {
+                specialCount++;
+            }
+        }
+        return (specialCount >= 2);
+    }
+
+
+    private boolean validateAddress(String addr) {
+        if (addr == null) {
+            return false;
+        }
+        String[] parts = addr.split("\\|", -1);
+        if (parts.length != 5) {
+            return false;
+        }
+        if (!"Victoria".equals(parts[3])) {
+            return false;
+        }
+        try {
+            Integer.parseInt(parts[0]);
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validateDate(String d) {
+        if (d == null) {
+            return false;
+        }
+        try {
+            LocalDate.parse(d, DATE_FMT);
+            return true;
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+    }
+
+    public boolean isSuspended() {
+        return isSuspended;
+    }
+}
