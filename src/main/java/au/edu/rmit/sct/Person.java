@@ -69,4 +69,111 @@ public class Person {
         } catch (IOException e) {
             return false;
         }
+        
+        
+    }
+
+    public boolean updatePersonalDetails(
+        String originalID,
+        String newID,
+        String newFirstName,
+        String newLastName,
+        String newAddress,
+        String newBirthdate
+    ) {
+        
+        if (!validatePersonID(newID)) {
+            return false;
+        }
+        if (!validateAddress(newAddress)) {
+            return false;
+        }
+        if (!validateDate(newBirthdate)) {
+            return false;
+        }
+
+       
+        LocalDate dob = LocalDate.parse(this.birthdate, DATE_FMT);
+        int ageNow = Period.between(dob, LocalDate.now()).getYears();
+
+        // Condition (B): If under 18, cannot change address
+        if (ageNow < 18 && !newAddress.equals(this.address)) {
+            return false;
+        }
+
+        // Condition (C): If the birthdate is changing, no other field may change
+        boolean birthChanged = !newBirthdate.equals(this.birthdate);
+        boolean nameOrIDOrAddressChanged =
+               !newID.equals(originalID)
+            || !newFirstName.equals(this.firstName)
+            || !newLastName.equals(this.lastName)
+            || !newAddress.equals(this.address);
+
+        if (birthChanged && nameOrIDOrAddressChanged) {
+            return false;
+        }
+
+        
+        char firstChar = originalID.charAt(0);
+        if (Character.isDigit(firstChar)) {
+            int digitValue = firstChar - '0';
+            if ((digitValue % 2) == 0 && !newID.equals(originalID)) {
+                return false;
+            }
+        }
+        try {
+            // Read all existing lines
+            List<String> allLines = Files.readAllLines(PERSONS_FILE);
+
+            List<String> updatedLines = new ArrayList<>(allLines.size());
+            boolean replacedOne = false;
+
+            for (String line : allLines) {
+                // Split into at most 5 parts:
+                //   [0]=personID, [1]=firstName, [2]=lastName, [3]=address, [4]=birthdate
+                String[] parts = line.split("\\|", 5);
+                if (parts.length < 5) {
+                    // Malformed line—just keep it unchanged
+                    updatedLines.add(line);
+                    continue;
+                }
+
+                if (parts[0].equals(originalID) && !replacedOne) {
+                    // This is the line we want to replace exactly once
+                    String newRecord = String.join("|",
+                        newID,
+                        newFirstName,
+                        newLastName,
+                        newAddress,
+                        newBirthdate
+                    );
+                    updatedLines.add(newRecord);
+                    replacedOne = true;
+                } else {
+                    // Keep the existing line unchanged
+                    updatedLines.add(line);
+                }
+            }
+
+            // Overwrite persons.txt with the updated content
+            Files.write(
+                PERSONS_FILE,
+                updatedLines,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING
+            );
+
+            // Update this object’s fields in memory:
+            this.personID  = newID;
+            this.firstName = newFirstName;
+            this.lastName  = newLastName;
+            this.address   = newAddress;
+            this.birthdate = newBirthdate;
+
+            return true;
+
+        } catch (IOException e) {
+            // If any I/O error happens while reading/writing, signal failure
+            return false;
+        }
     }
