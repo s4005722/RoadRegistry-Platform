@@ -1,3 +1,4 @@
+
 package au.edu.rmit.sct;
 
 import java.io.IOException;
@@ -11,18 +12,18 @@ import java.util.*;
 
 public class Person {
 
-    private String personID;    
+    private String personID;     
     private String firstName;
     private String lastName;
     private String address;      
-    private String birthdate;    
+    private String birthdate;   
     private boolean isSuspended = false;
 
     private static final Path PERSONS_FILE  = Paths.get("persons.txt");
     private static final Path DEMERITS_FILE = Paths.get("demeritPoints.txt");
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
-
+ 
     public Person(String personID,
                   String firstName,
                   String lastName,
@@ -35,17 +36,14 @@ public class Person {
         this.birthdate = birthdate;
     }
 
-
+  
     public boolean addPerson() {
-        // 1) Validate ID
         if (!validatePersonID(personID)) {
             return false;
         }
-        // 2) Validate address
         if (!validateAddress(address)) {
             return false;
         }
-        // 3) Validate birthdate format
         if (!validateDate(birthdate)) {
             return false;
         }
@@ -69,9 +67,8 @@ public class Person {
         } catch (IOException e) {
             return false;
         }
-        
-        
     }
+
 
     public boolean updatePersonalDetails(
         String originalID,
@@ -81,7 +78,7 @@ public class Person {
         String newAddress,
         String newBirthdate
     ) {
-        
+
         if (!validatePersonID(newID)) {
             return false;
         }
@@ -92,7 +89,7 @@ public class Person {
             return false;
         }
 
-       
+ 
         LocalDate dob = LocalDate.parse(this.birthdate, DATE_FMT);
         int ageNow = Period.between(dob, LocalDate.now()).getYears();
 
@@ -111,7 +108,8 @@ public class Person {
             return false;
         }
 
-        
+  
+
         char firstChar = originalID.charAt(0);
         if (Character.isDigit(firstChar)) {
             int digitValue = firstChar - '0';
@@ -119,15 +117,16 @@ public class Person {
                 return false;
             }
         }
+
+
         try {
-            // Read all existing lines
             List<String> allLines = Files.readAllLines(PERSONS_FILE);
 
             List<String> updatedLines = new ArrayList<>(allLines.size());
             boolean replacedOne = false;
 
             for (String line : allLines) {
-                // Split into at most 5 parts
+ 
                 String[] parts = line.split("\\|", 5);
                 if (parts.length < 5) {
                     updatedLines.add(line);
@@ -149,7 +148,6 @@ public class Person {
                 }
             }
 
-            // Overwrite persons.txt with the updated content
             Files.write(
                 PERSONS_FILE,
                 updatedLines,
@@ -157,7 +155,6 @@ public class Person {
                 StandardOpenOption.TRUNCATE_EXISTING
             );
 
-            // Update this object’s fields
             this.personID  = newID;
             this.firstName = newFirstName;
             this.lastName  = newLastName;
@@ -171,8 +168,8 @@ public class Person {
         }
     }
 
+
     public String addDemeritPoints(String offenseDate, int pts) {
-        //Validate offenseDate format
         if (!validateDate(offenseDate)) {
             return "Failed";
         }
@@ -180,15 +177,14 @@ public class Person {
             return "Failed";
         }
 
-        //Parse the offenseDate into a LocalDate
         LocalDate od;
         try {
             od = LocalDate.parse(offenseDate, DATE_FMT);
         } catch (DateTimeParseException e) {
+        
             return "Failed";
         }
 
-        //Build the record to append
         String record = String.join("|",
             personID,
             offenseDate,
@@ -196,7 +192,6 @@ public class Person {
         );
 
         try {
-            //Append to demeritPoints.txt
             Files.write(
                 DEMERITS_FILE,
                 Collections.singletonList(record),
@@ -207,7 +202,6 @@ public class Person {
             return "Failed";
         }
 
-        //Sum up all points in the last two years
         LocalDate cutoff = od.minusYears(2);
         int runningTotal = 0;
 
@@ -216,12 +210,11 @@ public class Person {
             for (String line : lines) {
                 String[] parts = line.split("\\|", 3);
                 if (parts.length < 3) {
-                    continue;
+                    continue; 
                 }
                 if (!parts[0].equals(personID)) {
-                    continue;
+                    continue; 
                 }
-                //Parse the offense date
                 LocalDate recordDate = LocalDate.parse(parts[1], DATE_FMT);
                 int recordPts = Integer.parseInt(parts[2]);
                 if (!recordDate.isBefore(cutoff)) {
@@ -229,13 +222,14 @@ public class Person {
                 }
             }
         } catch (IOException e) {
+
         }
 
-        //Calculate age on the offense date
         LocalDate dob;
         try {
             dob = LocalDate.parse(this.birthdate, DATE_FMT);
         } catch (DateTimeParseException ex) {
+
             return "Success";
         }
         int ageOnOffense = Period.between(dob, od).getYears();
@@ -248,7 +242,8 @@ public class Person {
         return "Success";
     }
 
-  
+
+ 
     private boolean validatePersonID(String id) {
         if (id == null || id.length() != 10) {
             return false;
@@ -275,7 +270,6 @@ public class Person {
         return (specialCount >= 2);
     }
 
-
     private boolean validateAddress(String addr) {
         if (addr == null) {
             return false;
@@ -295,6 +289,7 @@ public class Person {
         return true;
     }
 
+ 
     private boolean validateDate(String d) {
         if (d == null) {
             return false;
