@@ -5,8 +5,10 @@ import java.nio.file.*;
 import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.*;
 
+
 public class PersonTest {
 
+  
     @BeforeEach
     public void cleanFiles() {
         try {
@@ -15,12 +17,10 @@ public class PersonTest {
         } catch (IOException ignored) {}
     }
 
-    // ======== Tests for addPerson() ========
 
     @Test
     @DisplayName("addPerson: valid data → returns true, file contains record")
     public void testAddPerson_valid() {
-        // We start with no persons.txt (cleanFiles() has deleted it)
         Person p = new Person(
             "56@#_&$%AB",
             "Alice",
@@ -31,7 +31,6 @@ public class PersonTest {
         assertTrue(p.addPerson(),
                    "Valid person should be added successfully");
 
-        // Now read back the single line in persons.txt and compare with what we expect
         try {
             String content = Files.readString(Paths.get("persons.txt")).trim();
             String expected =
@@ -49,7 +48,7 @@ public class PersonTest {
     @DisplayName("addPerson: ID too short → returns false")
     public void testAddPerson_invalidID_length() {
         Person p = new Person(
-            "12@_ABC",  // only 7 characters, not 10
+            "12@_ABC", 
             "Bob",
             "Smith",
             "10|Main St|Melbourne|Victoria|Australia",
@@ -58,7 +57,6 @@ public class PersonTest {
         assertFalse(p.addPerson(),
                     "An ID shorter than 10 characters should cause addPerson() to return false");
 
-        // Because addPerson() returned false, persons.txt should not exist at all
         assertFalse(Files.exists(Paths.get("persons.txt")),
                     "persons.txt should not be created when addPerson fails");
     }
@@ -70,7 +68,6 @@ public class PersonTest {
             "23!!@@ZZAA",
             "Carol",
             "Taylor",
-            // State is "NewSouthWales" instead of "Victoria"
             "20|King St|Melbourne|NewSouthWales|Australia",
             "05-05-1995"
         );
@@ -88,7 +85,6 @@ public class PersonTest {
             "David",
             "Brown",
             "15|Queen St|Melbourne|Victoria|Australia",
-            // Wrong format: "YYYY-MM-DD" instead of "DD-MM-YYYY"
             "1990-11-15"
         );
         assertFalse(p.addPerson(),
@@ -101,7 +97,7 @@ public class PersonTest {
     @DisplayName("addPerson: ID lacks ≥2 specials in positions 3–8 → returns false")
     public void testAddPerson_invalidID_noSpecials() {
         Person p = new Person(
-            "23abcdefAB",   // positions 3..8 are only letters/digits (no special characters)
+            "23abcdefAB",   
             "Eve",
             "Johnson",
             "50|Oak St|Melbourne|Victoria|Australia",
@@ -113,10 +109,10 @@ public class PersonTest {
                     "persons.txt should not exist after a failed addPerson()");
     }
 
+
     @Test
     @DisplayName("updatePersonalDetails: rename only → succeeds")
     public void testUpdatePersonalDetails_renameOnly() {
-        // First insert a valid Person into persons.txt
         Person original = new Person(
             "56@#_&$%AB",
             "Alice",
@@ -127,14 +123,13 @@ public class PersonTest {
         assertTrue(original.addPerson(),
                    "We must have a valid person in persons.txt for update tests");
 
-        // Now attempt to update only the firstName (no other field changes)
         boolean result = original.updatePersonalDetails(
-            "56@#_&$%AB",         // originalID
-            "56@#_&$%AB",         // newID (same as old ID)
-            "Alicia",             // new firstName
-            "Walker",             // new lastName (unchanged)
-            "32|Highland Street|Melbourne|Victoria|Australia", // address unchanged
-            "15-11-1990"          // birthdate unchanged
+            "56@#_&$%AB",         
+            "56@#_&$%AB",         
+            "Alicia",             
+            "Walker",             
+            "32|Highland Street|Melbourne|Victoria|Australia", 
+            "15-11-1990"          
         );
         assertTrue(result,
                    "Updating only firstName (everything else identical) should succeed");
@@ -143,7 +138,6 @@ public class PersonTest {
     @Test
     @DisplayName("updatePersonalDetails: under-18 address change → fails")
     public void testUpdatePersonalDetails_ageUnder18_addressChange() {
-        // Create and add a teen who is under 18 based on birthdate 01-01-2008
         Person teen = new Person(
             "23!!@@ZZAA",
             "Teen",
@@ -154,14 +148,13 @@ public class PersonTest {
         assertTrue(teen.addPerson(),
                    "Teen must be in persons.txt so update can run");
 
-        // Now try to change teen's address (under-18 cannot change address)
         boolean result = teen.updatePersonalDetails(
             "23!!@@ZZAA",
-            "23!!@@ZZAA",     // ID unchanged
-            "Teen",           // firstName unchanged
-            "Tester",         // lastName unchanged
-            "11|New St|Melbourne|Victoria|Australia", // NEW address
-            "01-01-2008"      // birthdate unchanged
+            "23!!@@ZZAA",     
+            "Teen",           
+            "Tester",         
+            "11|New St|Melbourne|Victoria|Australia", 
+            "01-01-2008"      
         );
         assertFalse(result,
                     "Under-18 must not be allowed to change address");
@@ -170,7 +163,6 @@ public class PersonTest {
     @Test
     @DisplayName("updatePersonalDetails: birthdate change only → succeeds")
     public void testUpdatePersonalDetails_birthdateChangeOnly() {
-        // Create and add a teen under 18
         Person teen = new Person(
             "23!!@@ZZAA",
             "Teen",
@@ -181,14 +173,13 @@ public class PersonTest {
         assertTrue(teen.addPerson(),
                    "Teen must exist before we can update birthdate");
 
-        // Only change birthdate (no other field changes)
         boolean result = teen.updatePersonalDetails(
             "23!!@@ZZAA",
-            "23!!@@ZZAA",       // ID unchanged
-            "Teen",             // firstName unchanged
-            "Tester",           // lastName unchanged
-            "10|Test St|Melbourne|Victoria|Australia", // address unchanged
-            "02-02-2008"        // NEW birthdate
+            "23!!@@ZZAA",       
+            "Teen",             
+            "Tester",           
+            "10|Test St|Melbourne|Victoria|Australia", 
+            "02-02-2008"        
         );
         assertTrue(result,
                    "Under-18 is allowed to change birthdate only if no other fields change");
@@ -197,9 +188,8 @@ public class PersonTest {
     @Test
     @DisplayName("updatePersonalDetails: even-first-digit ID change → fails")
     public void testUpdatePersonalDetails_evenIDchange() {
-        // “24@@##ABCD” starts with '2' (even), so ID change must not be allowed
         Person p2 = new Person(
-            "24@@##ABCD",   // ID first char '2' (even)
+            "24@@##ABCD",  
             "John",
             "Doe",
             "5|Park St|Melbourne|Victoria|Australia",
@@ -208,14 +198,13 @@ public class PersonTest {
         assertTrue(p2.addPerson(),
                    "Person with even-first-digit ID must be created first");
 
-        // Attempt to change ID from "24@@##ABCD" to "26%%!!WXYZ" → should fail
         boolean result = p2.updatePersonalDetails(
-            "24@@##ABCD",  // originalID
-            "26%%!!WXYZ",  // newID (different)
-            "John",        // firstName unchanged
-            "Doe",         // lastName unchanged
-            "5|Park St|Melbourne|Victoria|Australia", // address unchanged
-            "10-10-2000"   // birthdate unchanged
+            "24@@##ABCD",  
+            "26%%!!WXYZ",  
+            "John",       
+            "Doe",         
+            "5|Park St|Melbourne|Victoria|Australia", 
+            "10-10-2000"  
         );
         assertFalse(result,
                     "Cannot change ID if the first digit is even");
@@ -224,7 +213,6 @@ public class PersonTest {
     @Test
     @DisplayName("updatePersonalDetails: invalid new address format → fails")
     public void testUpdatePersonalDetails_invalidNewAddressFormat() {
-        //Add a valid person
         Person p = new Person(
             "56@#_&$%AB",
             "Alice",
@@ -235,23 +223,23 @@ public class PersonTest {
         assertTrue(p.addPerson(),
                    "Must have a valid person in persons.txt");
 
-        //Now attempt to update with an address that has no '|' separators
         boolean result = p.updatePersonalDetails(
             "56@#_&$%AB",
-            "56@#_&$%AB",
-            "Alice",
-            "Walker",
+            "56@#_&$%AB",  
+            "Alice",       
+            "Walker",      
             "32 Highland Street Melbourne Victoria Australia",
-            "15-11-1990"
+            "15-11-1990"  
         );
         assertFalse(result,
                     "New address missing '|' separators should fail validation");
     }
 
+
+
     @Test
-    @DisplayName("addDemeritPoints: pts <1 = Failed")
+    @DisplayName("addDemeritPoints: pts <1 → Failed")
     public void testAddDemeritPoints_ptsTooLow() {
-        //Add a valid person so that demeritPoints.txt can be appended
         Person p = new Person(
             "45&*()!$GH",
             "Bob",
@@ -262,15 +250,13 @@ public class PersonTest {
         assertTrue(p.addPerson(),
                    "Person must be added before adding demerit points");
 
-        //Now supply 0 points, should return "Failed"
         assertEquals("Failed", p.addDemeritPoints("10-10-2024", 0),
                      "Points <1 should cause addDemeritPoints() to return 'Failed'");
     }
 
     @Test
-    @DisplayName("addDemeritPoints: invalid date format = Failed")
+    @DisplayName("addDemeritPoints: invalid date format → Failed")
     public void testAddDemeritPoints_invalidDate() {
-        //Add Bob
         Person p = new Person(
             "45&*()!$GH",
             "Bob",
@@ -280,15 +266,13 @@ public class PersonTest {
         );
         assertTrue(p.addPerson());
 
-        //Supply an offenseDate in format "YYYY/MM/DD" instead of "DD-MM-YYYY"
         assertEquals("Failed", p.addDemeritPoints("2024/10/10", 3),
                      "Invalid date format should cause addDemeritPoints() to return 'Failed'");
     }
 
     @Test
-    @DisplayName("addDemeritPoints: total under threshold for over-21 = no suspension")
+    @DisplayName("addDemeritPoints: total under threshold for over-21 → no suspension")
     public void testAddDemeritPoints_underThreshold() {
-        //Add Bob, who was born 15-11-1990
         Person p = new Person(
             "45&*()!$GH",
             "Bob",
@@ -297,18 +281,19 @@ public class PersonTest {
             "15-11-1990"
         );
         assertTrue(p.addPerson());
+
         assertEquals("Success", p.addDemeritPoints("01-01-2023", 3));
         assertFalse(p.isSuspended(),
-                    "3 points < 12 threshold for over-21 = not suspended");
+                    "3 points < 12 threshold for over-21 → not suspended");
+
         assertEquals("Success", p.addDemeritPoints("01-06-2023", 4));
         assertFalse(p.isSuspended(),
-                    "Total 7 < 12 = still not suspended for over-21");
+                    "Total 7 < 12 → still not suspended for over-21");
     }
 
     @Test
-    @DisplayName("addDemeritPoints: total > threshold for under-21 = suspend")
+    @DisplayName("addDemeritPoints: total > threshold for under-21 → suspend")
     public void testAddDemeritPoints_under21_exceed() {
-        //Create a teen under 21
         Person teen = new Person(
             "78**&&RTYU",
             "Cara",
@@ -317,19 +302,20 @@ public class PersonTest {
             "01-01-2005"
         );
         assertTrue(teen.addPerson());
+
         assertEquals("Success", teen.addDemeritPoints("01-03-2023", 4));
         assertFalse(teen.isSuspended(),
-                    "4 points < 6 threshold for under-21 = not suspended");
+                    "4 points < 6 threshold for under-21 → not suspended");
+
         assertEquals("Success", teen.addDemeritPoints("01-06-2023", 3));
         assertTrue(teen.isSuspended(),
-                   "7 points > 6 threshold for under-21 = should be suspended");
+                   "7 points > 6 threshold for under-21 → should be suspended");
     }
 
     @Test
-    @DisplayName("addDemeritPoints: total > threshold for over-21 = suspended")
+    @DisplayName("addDemeritPoints: total > threshold for over-21 → suspended")
     public void testAddDemeritPoints_over21_exceed() {
-        //Add Bob over 21
-        Person p = new Person(
+       Person p = new Person(
             "45&*()!$GH",
             "Bob",
             "Smith",
@@ -337,13 +323,17 @@ public class PersonTest {
             "15-11-1990"
         );
         assertTrue(p.addPerson());
+
         assertEquals("Success", p.addDemeritPoints("01-01-2023", 6));
         assertFalse(p.isSuspended(),
-                    "6 points < 12 threshold for over-21 = not suspended");
+                    "6 points < 12 threshold for over-21 → not suspended");
+
         assertEquals("Success", p.addDemeritPoints("01-06-2023", 6));
         assertFalse(p.isSuspended(),
-                    "12 points = 12 threshold for over-21 = still not suspended");
+                    "12 points = 12 threshold for over-21 ⇒ still not suspended");
+
         assertEquals("Success", p.addDemeritPoints("01-12-2023", 1));
         assertTrue(p.isSuspended(),
-                   "13 points > 12 threshold for over-21 = should be suspended");
+                   "13 points > 12 threshold for over-21 ⇒ should be suspended");
     }
+}
